@@ -189,7 +189,7 @@ const AdminDashboard: React.FC = () => {
                            {songs.map(s => (
                                <tr key={s.id} className="hover:bg-white/[0.01] transition-all group">
                                    <td className="p-8 flex items-center gap-8">
-                                       <img src={s.coverUrl} className="w-16 h-16 object-cover border border-white/5 transition-all duration-1000" />
+                                       <img src={s.coverUrl || undefined} className="w-16 h-16 object-cover border border-white/5 transition-all duration-1000" />
                                        <div className="space-y-1">
                                            <p className="font-thin text-white text-lg tracking-[0.2em] uppercase">{s.title}</p>
                                            <p className="text-[9px] text-slate-800 font-mono uppercase tracking-widest">{s.releaseDate} • {s.releaseCompany}</p>

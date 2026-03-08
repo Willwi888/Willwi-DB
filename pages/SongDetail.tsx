@@ -61,7 +61,7 @@ const SongDetail: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-32">
                 <div className="lg:col-span-4 space-y-24">
                     <div className="relative group border border-white/5">
-                        <img src={song.coverUrl} className="w-full aspect-square object-cover transition-all duration-[3s]" />
+                        <img src={song.coverUrl || undefined} className="w-full aspect-square object-cover transition-all duration-[3s]" />
                     </div>
 
                     <div className="bg-white/[0.01] border border-white/5 p-16 space-y-12">

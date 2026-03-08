@@ -131,7 +131,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       
       <audio 
         ref={bgmRef} 
-        src={resolveDirectLink(globalSettings.bgmUrl || '')} 
+        src={resolveDirectLink(globalSettings.bgmUrl || '') || undefined} 
         loop 
         crossOrigin="anonymous" 
       />

@@ -127,7 +127,7 @@ const Streaming: React.FC = () => {
                     {albums.map(album => (
                         <div key={album.id} onClick={() => handleAlbumClick(album.id)} className="group cursor-pointer relative">
                             <div className="aspect-square bg-slate-900 border border-white/5 overflow-hidden shadow-2xl rounded-sm transition-all duration-300 group-hover:border-white/20">
-                                <img src={album.images?.[0]?.url} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="" />
+                                <img src={album.images?.[0]?.url || undefined} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="" />
                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                                     <div className="w-12 h-12 rounded-full bg-[#1DB954] flex items-center justify-center scale-75 group-hover:scale-100 transition-transform duration-200">
                                         <svg className="w-6 h-6 text-black fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
@@ -153,7 +153,7 @@ const Streaming: React.FC = () => {
           <div className="relative z-10 w-full max-w-4xl h-full bg-slate-950 border-l border-white/10 shadow-2xl overflow-hidden flex flex-col animate-fade-in-right">
             <div className="p-12 border-b border-white/5 flex flex-col md:flex-row gap-12 bg-white/[0.01]">
                 <div className="w-48 h-48 md:w-64 md:h-64 shrink-0 shadow-2xl relative group">
-                    <img src={selectedAlbum.images?.[0]?.url} className="w-full h-full object-cover border border-white/10" alt="" />
+                    <img src={selectedAlbum.images?.[0]?.url || undefined} className="w-full h-full object-cover border border-white/10" alt="" />
                 </div>
                 <div className="flex flex-col justify-end space-y-4">
                     <span className="text-[10px] text-brand-gold font-bold uppercase tracking-[0.8em]">{selectedAlbum.album_type}</span>

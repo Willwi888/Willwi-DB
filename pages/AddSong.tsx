@@ -134,7 +134,7 @@ const AddSong: React.FC = () => {
                     <div className="space-y-3 max-h-48 overflow-y-auto custom-scrollbar">
                         {searchResults.map(res => (
                             <div key={res.id} onClick={() => handleImportSpotify(res)} className="flex items-center gap-4 p-3 bg-white/[0.03] border border-white/5 hover:border-brand-gold cursor-pointer transition-all group">
-                                <img src={res.images?.[0]?.url || res.album?.images?.[0]?.url || ''} className="w-10 h-10 object-cover" />
+                                <img src={res.images?.[0]?.url || res.album?.images?.[0]?.url || undefined} className="w-10 h-10 object-cover" />
                                 <div className="flex-1 overflow-hidden">
                                     <p className="text-[11px] text-white font-bold truncate group-hover:text-brand-gold">{res.name}</p>
                                     <p className="text-[9px] text-slate-500 uppercase tracking-widest">{res.searchType}</p>
@@ -147,7 +147,7 @@ const AddSong: React.FC = () => {
                 <div className="space-y-6">
                     <div className="aspect-square bg-slate-900 border border-white/10 overflow-hidden relative shadow-2xl">
                         {formData.coverUrl ? (
-                            <img src={formData.coverUrl} className="w-full h-full object-cover" />
+                            <img src={formData.coverUrl || undefined} className="w-full h-full object-cover" />
                         ) : (
                             <div className="flex items-center justify-center h-full text-[10px] text-slate-700 uppercase tracking-[0.4em]">No Artwork</div>
                         )}

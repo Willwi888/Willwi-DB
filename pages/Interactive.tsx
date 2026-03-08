@@ -461,7 +461,7 @@ const Interactive: React.FC = () => {
                </div>
            )}
       </div>
-      <audio ref={audioRef} src={resolveDirectLink(selectedSong?.audioUrl || '')} crossOrigin="anonymous" onTimeUpdate={() => { if (audioRef.current) setProgress(audioRef.current.currentTime); }} onLoadedMetadata={() => setDuration(audioRef.current?.duration || 0)} />
+      <audio ref={audioRef} src={resolveDirectLink(selectedSong?.audioUrl || '') || undefined} crossOrigin="anonymous" onTimeUpdate={() => { if (audioRef.current) setProgress(audioRef.current.currentTime); }} onLoadedMetadata={() => setDuration(audioRef.current?.duration || 0)} />
     </div>
   );
 }; export default Interactive;

@@ -14,7 +14,7 @@ export const getArtistDiscographyViaAI = async (artistName: string): Promise<any
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-3.1-pro-preview',
       contents: `請使用 Google Search 搜尋音樂人「${artistName}」在 Spotify 上的完整作品清單。
       我需要獲取目前所有的專輯 (Albums) 與單曲 (Singles)，包含發行日期。
       
@@ -43,8 +43,13 @@ export const getArtistDiscographyViaAI = async (artistName: string): Promise<any
     });
 
     return JSON.parse(response.text || "[]");
-  } catch (error) {
-    console.error("AI Discography Discovery Error:", error);
+  } catch (error: any) {
+    const errorStr = JSON.stringify(error) || error.toString();
+    if (errorStr.includes('429') || errorStr.includes('quota') || errorStr.includes('RESOURCE_EXHAUSTED')) {
+      console.warn("AI Discography Discovery: Quota exceeded.");
+    } else {
+      console.error("AI Discography Discovery Error:", error);
+    }
     return [];
   }
 };
@@ -71,8 +76,13 @@ export const generateSongVisual = async (prompt: string): Promise<string | null>
       }
     }
     return null;
-  } catch (error) {
-    console.error("Image generation error:", error);
+  } catch (error: any) {
+    const errorStr = JSON.stringify(error) || error.toString();
+    if (errorStr.includes('429') || errorStr.includes('quota') || errorStr.includes('RESOURCE_EXHAUSTED')) {
+      console.warn("Image generation: Quota exceeded.");
+    } else {
+      console.error("Image generation error:", error);
+    }
     return null;
   }
 };
@@ -105,8 +115,13 @@ export const generatePromoVideo = async (prompt: string): Promise<string | null>
     const response = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
     const blob = await response.blob();
     return URL.createObjectURL(blob);
-  } catch (error) {
-    console.error("Video generation error:", error);
+  } catch (error: any) {
+    const errorStr = JSON.stringify(error) || error.toString();
+    if (errorStr.includes('429') || errorStr.includes('quota') || errorStr.includes('RESOURCE_EXHAUSTED')) {
+      console.warn("Video generation: Quota exceeded.");
+    } else {
+      console.error("Video generation error:", error);
+    }
     return null;
   }
 };
@@ -115,7 +130,7 @@ export const getLatestWillwiInfo = async (): Promise<{ text: string; sources?: {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || process.env.API_KEY });
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-3-flash-preview',
       contents: `請使用 Google Search 搜尋關於「Willwi 陳威兒」最新的網路資訊與動態。
       請用優雅、溫暖的語氣，以繁體中文撰寫一段約 100 字的簡短介紹，總結他近期的活動或作品。`,
       config: {
@@ -130,8 +145,13 @@ export const getLatestWillwiInfo = async (): Promise<{ text: string; sources?: {
         chunks.forEach((c: any) => { if (c.web) sources.push({ title: c.web.title, uri: c.web.uri }); });
     }
     return { text, sources };
-  } catch (error) {
-    console.error("AI Latest Info Error:", error);
+  } catch (error: any) {
+    const errorStr = JSON.stringify(error) || error.toString();
+    if (errorStr.includes('429') || errorStr.includes('quota') || errorStr.includes('RESOURCE_EXHAUSTED')) {
+      console.warn("AI Latest Info: Quota exceeded, using fallback message.");
+    } else {
+      console.error("AI Latest Info Error:", error);
+    }
     return { text: "目前無法取得最新資訊，請稍後再試。" };
   }
 };
@@ -155,8 +175,13 @@ export const checkSpam = async (message: string): Promise<boolean> => {
     });
     const result = JSON.parse(response.text || '{"isSpam": false}');
     return result.isSpam;
-  } catch (error) {
-    console.error("Spam check error:", error);
+  } catch (error: any) {
+    const errorStr = JSON.stringify(error) || error.toString();
+    if (errorStr.includes('429') || errorStr.includes('quota') || errorStr.includes('RESOURCE_EXHAUSTED')) {
+      console.warn("Spam check: Quota exceeded.");
+    } else {
+      console.error("Spam check error:", error);
+    }
     return false; // Default to false if check fails
   }
 };
@@ -167,16 +192,26 @@ export const getChatResponse = async (
 ): Promise<{ text: string; sources?: { title: string; uri: string }[] }> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const chat = ai.chats.create({
-    model: 'gemini-3-pro-preview',
+    model: 'gemini-3.1-pro-preview',
     config: { systemInstruction: GRANDMA_SYSTEM_INSTRUCTION, tools: [{ googleSearch: {} }] },
     history: history
   });
-  const result = await chat.sendMessage({ message });
-  const text = result.text;
-  const sources: { title: string; uri: string }[] = [];
-  const chunks = result.candidates?.[0]?.groundingMetadata?.groundingChunks;
-  if (chunks) {
-      chunks.forEach((c: any) => { if (c.web) sources.push({ title: c.web.title, uri: c.web.uri }); });
+  try {
+    const result = await chat.sendMessage({ message });
+    const text = result.text;
+    const sources: { title: string; uri: string }[] = [];
+    const chunks = result.candidates?.[0]?.groundingMetadata?.groundingChunks;
+    if (chunks) {
+        chunks.forEach((c: any) => { if (c.web) sources.push({ title: c.web.title, uri: c.web.uri }); });
+    }
+    return { text, sources };
+  } catch (error: any) {
+    const errorStr = JSON.stringify(error) || error.toString();
+    if (errorStr.includes('429') || errorStr.includes('quota') || errorStr.includes('RESOURCE_EXHAUSTED')) {
+      console.warn("AI Chat: Quota exceeded, using fallback message.");
+      return { text: "阿嬤現在有點累了，休息一下再跟你聊喔。" };
+    }
+    console.error("AI Chat Error:", error);
+    return { text: "阿嬤現在有點累了，休息一下再跟你聊喔。" };
   }
-  return { text, sources };
 };

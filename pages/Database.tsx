@@ -102,7 +102,7 @@ const Database: React.FC = () => {
               {grouped.map((album) => (
                   <div key={album.upc + album.title} onClick={() => setFocusedAlbum(album)} className="group cursor-pointer">
                       <div className="aspect-square bg-black border border-white/5 overflow-hidden transition-all duration-500 group-hover:border-brand-gold/20 relative">
-                          <img src={album.coverUrl} className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105 opacity-100" alt={album.title} />
+                          <img src={album.coverUrl || undefined} className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105 opacity-100" alt={album.title} />
                           <div className="absolute inset-0 bg-black/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-8 text-center backdrop-blur-sm">
                               <span className="text-[7px] text-brand-gold/60 font-black uppercase tracking-[0.6em] mb-4">Master View</span>
                               <h3 className="text-sm font-medium text-white uppercase tracking-[0.3em] leading-tight">{album.title}</h3>
@@ -127,7 +127,7 @@ const Database: React.FC = () => {
             <div className="relative w-full max-w-6xl h-[90vh] overflow-hidden bg-black border border-white/5 flex flex-col md:flex-row shadow-[0_60px_150px_rgba(0,0,0,1)]">
                 <div className="w-full md:w-[400px] shrink-0 bg-[#050a14] flex flex-col items-center justify-center p-12 md:p-20 border-r border-white/5">
                     <div className="w-full aspect-square relative shadow-2xl mb-12 overflow-hidden border border-white/5">
-                        <img src={focusedAlbum.coverUrl} className="w-full h-full object-cover" alt={focusedAlbum.title} />
+                        <img src={focusedAlbum.coverUrl || undefined} className="w-full h-full object-cover" alt={focusedAlbum.title} />
                     </div>
                     <div className="text-center space-y-6 w-full">
                         <h2 className="text-2xl font-light text-white uppercase tracking-[0.3em] leading-tight">{focusedAlbum.title}</h2>
