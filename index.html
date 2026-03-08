@@ -1,0 +1,96 @@
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Willwi Music DB | Official Workspace V2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;200;300;400;500;600;700;800;900&family=Noto+Serif+TC:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Montserrat', 'sans-serif'],
+              serif: ['"Noto Serif TC"', 'serif'],
+            },
+            colors: {
+              brand: {
+                dark: '#020617',
+                darker: '#000000',
+                accent: '#38bdf8',
+                gold: '#fbbf24',
+                surface: '#0f172a'
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      @keyframes twinkle {
+        0%, 100% { opacity: 0.2; transform: scale(0.8); }
+        50% { opacity: 0.8; transform: scale(1.2); }
+      }
+      @keyframes floatSlow {
+        0% { transform: translate(0, 0); }
+        50% { transform: translate(10px, -10px); }
+        100% { transform: translate(0, 0); }
+      }
+      @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      
+      /* 加速動畫時間 */
+      .animate-fade-in-up { animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+      .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #000;
+        color: #f8fafc;
+        font-weight: 300;
+        letter-spacing: 0.05em;
+        min-height: 100vh;
+        overflow-x: hidden;
+        touch-action: manipulation;
+      }
+      
+      #root {
+        position: relative;
+        z-index: 10;
+        min-height: 100vh;
+      }
+
+      ::-webkit-scrollbar { width: 4px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: rgba(251, 191, 36, 0.2); border-radius: 10px; }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.13.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.38.0",
+    "idb": "https://esm.sh/idb@^8.0.3"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="antialiased font-sans">
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
