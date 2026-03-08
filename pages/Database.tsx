@@ -2,6 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../context/DataContext';
+import { useUser } from '../context/UserContext';
 import { Language, Song } from '../types';
 import { useToast } from '../context/ToastContext';
 
@@ -16,6 +17,7 @@ interface AlbumGroup {
 
 const Database: React.FC = () => {
   const { songs, playSong } = useData();
+  const { isAdmin } = useUser();
   const navigate = useNavigate();
   // Fixed: Corrected the declaration to avoid using 'showToast' before it is defined.
   const { showToast } = useToast();
@@ -134,7 +136,12 @@ const Database: React.FC = () => {
                         <div className="space-y-2 pt-2">
                              <p className="text-[8px] text-brand-gold/40 font-black uppercase tracking-[0.6em]">{focusedAlbum.releaseDate}</p>
                         </div>
-                        <button onClick={() => setFocusedAlbum(null)} className="mt-12 px-10 py-4 border border-white/10 text-[8px] font-black text-white/20 hover:text-white uppercase tracking-[0.6em] transition-all">Close Entry</button>
+                        <div className="flex flex-col gap-4 mt-12">
+                            {isAdmin && (
+                                <button onClick={() => navigate(`/add?edit=${focusedAlbum.songs[0]?.id}`)} className="w-full px-10 py-4 border border-brand-gold/30 text-[8px] font-black text-brand-gold hover:bg-brand-gold hover:text-black uppercase tracking-[0.6em] transition-all">Edit Album</button>
+                            )}
+                            <button onClick={() => setFocusedAlbum(null)} className="w-full px-10 py-4 border border-white/10 text-[8px] font-black text-white/20 hover:text-white uppercase tracking-[0.6em] transition-all">Close Entry</button>
+                        </div>
                     </div>
                 </div>
                 <div className="flex-1 flex flex-col p-10 md:p-20 overflow-y-auto custom-scrollbar bg-black">
@@ -145,9 +152,16 @@ const Database: React.FC = () => {
                                     <span className="text-[10px] font-mono text-slate-800">{(i+1).toString().padStart(2, '0')}</span>
                                     <h4 className="text-xl font-thin text-white/40 uppercase tracking-[0.2em] group-hover:text-white transition-colors">{s.title}</h4>
                                 </div>
-                                <button onClick={(e) => { e.stopPropagation(); playSong(s); }} className="w-10 h-10 border border-white/5 rounded-full flex items-center justify-center text-white/10 hover:bg-white hover:text-black transition-all">
-                                    <span className="text-[8px] ml-0.5">▶</span>
-                                </button>
+                                <div className="flex items-center gap-4">
+                                    {isAdmin && (
+                                        <button onClick={(e) => { e.stopPropagation(); navigate(`/add?edit=${s.id}`); }} className="px-4 py-2 border border-white/5 rounded-full flex items-center justify-center text-[8px] text-white/30 hover:bg-white hover:text-black uppercase tracking-widest transition-all">
+                                            Edit
+                                        </button>
+                                    )}
+                                    <button onClick={(e) => { e.stopPropagation(); playSong(s); }} className="w-10 h-10 border border-white/5 rounded-full flex items-center justify-center text-white/10 hover:bg-white hover:text-black transition-all">
+                                        <span className="text-[8px] ml-0.5">▶</span>
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>

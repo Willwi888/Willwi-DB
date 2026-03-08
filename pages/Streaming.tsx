@@ -86,11 +86,11 @@ const Streaming: React.FC = () => {
                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.8em] border-l border-brand-gold pl-4">OFFICIAL CHANNELS</span>
                 <span className="px-3 py-1 bg-brand-gold/10 text-brand-gold text-[8px] font-black uppercase tracking-widest rounded-full border border-brand-gold/20 animate-pulse">Master Playlist Hub</span>
             </div>
-            <h2 className="text-6xl md:text-8xl font-light text-white tracking-tighter uppercase leading-none">STREAMING</h2>
+            <h2 className="text-6xl md:text-8xl font-light text-white tracking-tighter uppercase leading-none">串流媒體</h2>
           </div>
           <div className="flex gap-4 w-full md:w-auto">
-              <a href={globalSettings.youtubePlaylistUrl} target="_blank" rel="noreferrer" className="flex-1 md:flex-none px-10 py-5 bg-[#FF0000] text-white text-[10px] font-black uppercase tracking-[0.4em] hover:bg-white hover:text-black transition-all duration-200 text-center rounded-sm">YouTube Music</a>
-              <a href={`https://open.spotify.com/artist/${WILLWI_SPOTIFY_ID}`} target="_blank" rel="noreferrer" className="flex-1 md:flex-none px-10 py-5 bg-[#1DB954] text-black text-[10px] font-black uppercase tracking-[0.4em] hover:bg-white transition-all duration-200 text-center rounded-sm">Spotify</a>
+              <a href={globalSettings.youtubePlaylistUrl} target="_blank" rel="noreferrer" className="flex-1 md:flex-none px-10 py-5 bg-[#FF0000] text-white text-[10px] font-black uppercase tracking-[0.4em] hover:bg-white hover:text-black transition-all duration-200 text-center rounded-sm">YOUTUBE 音樂</a>
+              <a href={`https://open.spotify.com/artist/${WILLWI_SPOTIFY_ID}`} target="_blank" rel="noreferrer" className="flex-1 md:flex-none px-10 py-5 bg-[#1DB954] text-black text-[10px] font-black uppercase tracking-[0.4em] hover:bg-white transition-all duration-200 text-center rounded-sm">SPOTIFY</a>
           </div>
         </div>
 

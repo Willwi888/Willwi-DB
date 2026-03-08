@@ -8,7 +8,7 @@ import { useToast } from '../context/ToastContext';
 type Tab = 'console' | 'catalog' | 'deployment' | 'guestbook';
 
 const AdminDashboard: React.FC = () => {
-  const { songs, deleteSong, globalSettings, uploadSettingsToCloud, bulkAddSongs, refreshData, syncSongWithSpotify, messages, approveMessage, deleteMessage } = useData();
+  const { songs, deleteSong, globalSettings, uploadSettingsToCloud, bulkAddSongs, refreshData, syncSongWithSpotify, messages, approveMessage, deleteMessage, playSong } = useData();
   const { isAdmin, enableAdmin, logoutAdmin } = useUser();
   const { showToast } = useToast();
   const navigate = useNavigate();
@@ -18,6 +18,17 @@ const AdminDashboard: React.FC = () => {
   const [passwordInput, setPasswordInput] = useState('');
   const [editingSettings, setEditingSettings] = useState(globalSettings);
   const [isBulkSyncing, setIsBulkSyncing] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+      cloud: true,
+      media: false,
+      payment: false,
+      social: false,
+      countdown: false
+  });
+
+  const toggleSection = (section: string) => {
+      setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
 
   const handleSaveSettings = async () => {
       await uploadSettingsToCloud(editingSettings);
@@ -206,6 +217,7 @@ const AdminDashboard: React.FC = () => {
                                        </p>
                                    </td>
                                    <td className="p-8 text-right space-x-8">
+                                       <button onClick={() => playSong(s)} className="text-[9px] font-medium text-emerald-500/60 hover:text-emerald-500 uppercase tracking-widest transition-colors">Play</button>
                                        <button onClick={() => navigate(`/add?edit=${s.id}`)} className="text-[9px] font-medium text-white/30 hover:text-white uppercase tracking-widest transition-colors">Modify</button>
                                        <button onClick={() => window.confirm('確定從本地存檔中移除？') && deleteSong(s.id)} className="text-[9px] font-medium text-rose-900/40 hover:text-rose-600 uppercase tracking-widest transition-colors">Purge</button>
                                    </td>
@@ -218,123 +230,155 @@ const AdminDashboard: React.FC = () => {
       )}
 
       {activeTab === 'console' && (
-        <div className="w-full space-y-20">
+        <div className="w-full space-y-6">
             {/* 核心雲端參數 */}
-            <div className="bg-white/[0.01] border border-white/5 p-16 space-y-12 shadow-2xl relative">
-                <div className="absolute top-8 left-8">
-                    <span className="text-[8px] text-brand-gold font-black uppercase tracking-[0.4em]">Section 01 // Cloud Hub</span>
+            <div className="bg-white/[0.01] border border-white/5 shadow-2xl overflow-hidden transition-all duration-300">
+                <div 
+                    className="p-8 cursor-pointer flex justify-between items-center hover:bg-white/[0.02] transition-colors"
+                    onClick={() => toggleSection('cloud')}
+                >
+                    <span className="text-[10px] text-brand-gold font-black uppercase tracking-[0.4em]">Section 01 // Cloud Hub</span>
+                    <span className="text-brand-gold text-xs">{expandedSections.cloud ? '−' : '+'}</span>
                 </div>
-                <div className="space-y-8 pt-10">
-                    <label className="text-[10px] text-brand-gold font-black uppercase tracking-[0.8em] block">Authority Master URL (Global Persistence)</label>
-                    <input className="w-full bg-black border border-white/10 p-5 text-white text-sm outline-none focus:border-brand-gold font-mono tracking-widest" value={editingSettings.masterDataUrl || ''} onChange={e => updateField('masterDataUrl', e.target.value)} placeholder="https://dl.dropboxusercontent.com/s/..." />
-                </div>
+                {expandedSections.cloud && (
+                    <div className="p-8 pt-0 space-y-8 border-t border-white/5 mt-4">
+                        <label className="text-[10px] text-brand-gold font-black uppercase tracking-[0.8em] block mt-8">Authority Master URL (Global Persistence)</label>
+                        <input className="w-full bg-black border border-white/10 p-5 text-white text-sm outline-none focus:border-brand-gold font-mono tracking-widest" value={editingSettings.masterDataUrl || ''} onChange={e => updateField('masterDataUrl', e.target.value)} placeholder="https://dl.dropboxusercontent.com/s/..." />
+                    </div>
+                )}
             </div>
 
             {/* 影視媒體參數 */}
-            <div className="bg-white/[0.01] border border-white/5 p-16 space-y-12 shadow-2xl relative">
-                <div className="absolute top-8 left-8">
-                    <span className="text-[8px] text-brand-gold font-black uppercase tracking-[0.4em]">Section 02 // Cinema Media</span>
+            <div className="bg-white/[0.01] border border-white/5 shadow-2xl overflow-hidden transition-all duration-300">
+                <div 
+                    className="p-8 cursor-pointer flex justify-between items-center hover:bg-white/[0.02] transition-colors"
+                    onClick={() => toggleSection('media')}
+                >
+                    <span className="text-[10px] text-brand-gold font-black uppercase tracking-[0.4em]">Section 02 // Cinema Media</span>
+                    <span className="text-brand-gold text-xs">{expandedSections.media ? '−' : '+'}</span>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-10">
-                    <div className="space-y-8">
-                        <label className="text-[10px] text-white/40 font-black uppercase tracking-[0.5em] block">Background Protocol URL (Video)</label>
-                        <input className="w-full bg-black border border-white/10 p-5 text-white text-sm outline-none focus:border-brand-gold font-mono tracking-widest" value={editingSettings.backgroundVideoUrl || ''} onChange={e => updateField('backgroundVideoUrl', e.target.value)} placeholder="影片連結 (.mp4)" />
-                    </div>
-                    <div className="space-y-8">
-                        <div className="flex justify-between items-center">
-                            <label className="text-[10px] text-white/40 font-black uppercase tracking-[0.5em] block">Background Image URL</label>
-                            <button onClick={() => handleImageUpload('backgroundImageUrl')} className="text-[8px] text-brand-gold font-black border border-brand-gold/20 px-3 py-1 hover:bg-brand-gold hover:text-black transition-all">UPLOAD BG IMAGE</button>
+                {expandedSections.media && (
+                    <div className="p-8 pt-0 grid grid-cols-1 md:grid-cols-2 gap-12 border-t border-white/5 mt-4">
+                        <div className="space-y-8 mt-8">
+                            <label className="text-[10px] text-white/40 font-black uppercase tracking-[0.5em] block">Background Protocol URL (Video)</label>
+                            <input className="w-full bg-black border border-white/10 p-5 text-white text-sm outline-none focus:border-brand-gold font-mono tracking-widest" value={editingSettings.backgroundVideoUrl || ''} onChange={e => updateField('backgroundVideoUrl', e.target.value)} placeholder="影片連結 (.mp4)" />
                         </div>
-                        <input className="w-full bg-black border border-white/10 p-5 text-white text-sm outline-none focus:border-brand-gold font-mono tracking-widest" value={editingSettings.backgroundImageUrl || ''} onChange={e => updateField('backgroundImageUrl', e.target.value)} />
-                    </div>
-                    <div className="space-y-8">
-                        <label className="text-[10px] text-white/40 font-black uppercase tracking-[0.5em] block">Ambient Protocol URL (BGM)</label>
-                        <input className="w-full bg-black border border-white/10 p-5 text-white text-sm outline-none focus:border-brand-gold font-mono tracking-widest" value={editingSettings.bgmUrl || ''} onChange={e => updateField('bgmUrl', e.target.value)} placeholder="背景音樂連結 (.mp3)" />
-                    </div>
-                    <div className="space-y-8">
-                        <div className="flex justify-between items-center">
-                            <label className="text-[10px] text-white/40 font-black uppercase tracking-[0.5em] block">Portrait Protocol URL</label>
-                            <button onClick={() => handleImageUpload('portraitUrl')} className="text-[8px] text-brand-gold font-black border border-brand-gold/20 px-3 py-1 hover:bg-brand-gold hover:text-black transition-all">UPLOAD PHOTO</button>
+                        <div className="space-y-8 mt-8">
+                            <div className="flex justify-between items-center">
+                                <label className="text-[10px] text-white/40 font-black uppercase tracking-[0.5em] block">Background Image URL</label>
+                                <button onClick={() => handleImageUpload('backgroundImageUrl')} className="text-[8px] text-brand-gold font-black border border-brand-gold/20 px-3 py-1 hover:bg-brand-gold hover:text-black transition-all">UPLOAD BG IMAGE</button>
+                            </div>
+                            <input className="w-full bg-black border border-white/10 p-5 text-white text-sm outline-none focus:border-brand-gold font-mono tracking-widest" value={editingSettings.backgroundImageUrl || ''} onChange={e => updateField('backgroundImageUrl', e.target.value)} />
                         </div>
-                        <input className="w-full bg-black border border-white/10 p-5 text-white text-sm outline-none focus:border-brand-gold font-mono tracking-widest" value={editingSettings.portraitUrl || ''} onChange={e => updateField('portraitUrl', e.target.value)} />
+                        <div className="space-y-8">
+                            <label className="text-[10px] text-white/40 font-black uppercase tracking-[0.5em] block">Ambient Protocol URL (BGM)</label>
+                            <input className="w-full bg-black border border-white/10 p-5 text-white text-sm outline-none focus:border-brand-gold font-mono tracking-widest" value={editingSettings.bgmUrl || ''} onChange={e => updateField('bgmUrl', e.target.value)} placeholder="背景音樂連結 (.mp3)" />
+                        </div>
+                        <div className="space-y-8">
+                            <div className="flex justify-between items-center">
+                                <label className="text-[10px] text-white/40 font-black uppercase tracking-[0.5em] block">Portrait Protocol URL</label>
+                                <button onClick={() => handleImageUpload('portraitUrl')} className="text-[8px] text-brand-gold font-black border border-brand-gold/20 px-3 py-1 hover:bg-brand-gold hover:text-black transition-all">UPLOAD PHOTO</button>
+                            </div>
+                            <input className="w-full bg-black border border-white/10 p-5 text-white text-sm outline-none focus:border-brand-gold font-mono tracking-widest" value={editingSettings.portraitUrl || ''} onChange={e => updateField('portraitUrl', e.target.value)} />
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
 
             {/* 金流結界參數 (QR Codes) */}
-            <div className="bg-white/[0.01] border border-white/5 p-16 space-y-12 shadow-2xl relative">
-                <div className="absolute top-8 left-8">
-                    <span className="text-[8px] text-brand-gold font-black uppercase tracking-[0.4em]">Section 03 // Payment Protocol</span>
+            <div className="bg-white/[0.01] border border-white/5 shadow-2xl overflow-hidden transition-all duration-300">
+                <div 
+                    className="p-8 cursor-pointer flex justify-between items-center hover:bg-white/[0.02] transition-colors"
+                    onClick={() => toggleSection('payment')}
+                >
+                    <span className="text-[10px] text-brand-gold font-black uppercase tracking-[0.4em]">Section 03 // Payment Protocol</span>
+                    <span className="text-brand-gold text-xs">{expandedSections.payment ? '−' : '+'}</span>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-12 pt-10">
-                    {[
-                        { key: 'qr_production', label: 'QR: Production (對位)' },
-                        { key: 'qr_cinema', label: 'QR: Cinema (代製)' },
-                        { key: 'qr_support', label: 'QR: Support (支持)' },
-                        { key: 'qr_line', label: 'QR: Line (官方)' },
-                        { key: 'qr_global_payment', label: 'Global Payment (通配)' }
-                    ].map(field => (
-                        <div key={field.key} className="space-y-6">
-                            <div className="flex justify-between items-center">
-                                <label className="text-[9px] text-white/30 font-medium uppercase tracking-[0.4em] block">{field.label}</label>
-                                <button onClick={() => handleImageUpload(field.key)} className="text-[7px] text-brand-gold/40 hover:text-brand-gold uppercase font-black transition-all">Upload QR</button>
+                {expandedSections.payment && (
+                    <div className="p-8 pt-0 grid grid-cols-1 md:grid-cols-3 gap-12 border-t border-white/5 mt-4">
+                        {[
+                            { key: 'qr_production', label: 'QR: Production (對位)' },
+                            { key: 'qr_cinema', label: 'QR: Cinema (代製)' },
+                            { key: 'qr_support', label: 'QR: Support (支持)' },
+                            { key: 'qr_line', label: 'QR: Line (官方)' },
+                            { key: 'qr_global_payment', label: 'Global Payment (通配)' }
+                        ].map((field, idx) => (
+                            <div key={field.key} className={`space-y-6 ${idx < 3 ? 'mt-8' : ''}`}>
+                                <div className="flex justify-between items-center">
+                                    <label className="text-[9px] text-white/30 font-medium uppercase tracking-[0.4em] block">{field.label}</label>
+                                    <button onClick={() => handleImageUpload(field.key)} className="text-[7px] text-brand-gold/40 hover:text-brand-gold uppercase font-black transition-all">Upload QR</button>
+                                </div>
+                                <input className="w-full bg-transparent border-b border-white/5 py-3 text-white text-xs outline-none focus:border-brand-gold font-mono truncate" value={(editingSettings as any)[field.key] || ''} onChange={e => updateField(field.key, e.target.value)} />
                             </div>
-                            <input className="w-full bg-transparent border-b border-white/5 py-3 text-white text-xs outline-none focus:border-brand-gold font-mono truncate" value={(editingSettings as any)[field.key] || ''} onChange={e => updateField(field.key, e.target.value)} />
+                        ))}
+                        
+                        <div className="space-y-6">
+                            <label className="text-[10px] text-white/40 font-black uppercase tracking-[0.5em] block">Access Protocol Code</label>
+                            <input className="w-full bg-black border border-white/10 p-5 text-white text-sm outline-none focus:border-brand-gold font-mono tracking-[0.5em]" value={editingSettings.accessCode || ''} onChange={e => updateField('accessCode', e.target.value)} />
                         </div>
-                    ))}
-                    
-                    <div className="space-y-6">
-                        <label className="text-[10px] text-white/40 font-black uppercase tracking-[0.5em] block">Access Protocol Code</label>
-                        <input className="w-full bg-black border border-white/10 p-5 text-white text-sm outline-none focus:border-brand-gold font-mono tracking-[0.5em]" value={editingSettings.accessCode || ''} onChange={e => updateField('accessCode', e.target.value)} />
                     </div>
-                </div>
+                )}
             </div>
 
             {/* 官方社交鏈結 */}
-            <div className="bg-white/[0.01] border border-white/5 p-16 space-y-12 shadow-2xl relative">
-                <div className="absolute top-8 left-8">
-                    <span className="text-[8px] text-brand-gold font-black uppercase tracking-[0.4em]">Section 04 // Social Gateway</span>
+            <div className="bg-white/[0.01] border border-white/5 shadow-2xl overflow-hidden transition-all duration-300">
+                <div 
+                    className="p-8 cursor-pointer flex justify-between items-center hover:bg-white/[0.02] transition-colors"
+                    onClick={() => toggleSection('social')}
+                >
+                    <span className="text-[10px] text-brand-gold font-black uppercase tracking-[0.4em]">Section 04 // Social Gateway</span>
+                    <span className="text-brand-gold text-xs">{expandedSections.social ? '−' : '+'}</span>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-10">
-                    <div className="space-y-6">
-                        <label className="text-[9px] text-white/30 font-medium uppercase tracking-[0.4em] block">Link: Official Website</label>
-                        <input className="w-full bg-transparent border-b border-white/5 py-3 text-white text-xs outline-none focus:border-brand-gold font-mono" value={editingSettings.link_website || ''} onChange={e => updateField('link_website', e.target.value)} />
+                {expandedSections.social && (
+                    <div className="p-8 pt-0 grid grid-cols-1 md:grid-cols-2 gap-12 border-t border-white/5 mt-4">
+                        <div className="space-y-6 mt-8">
+                            <label className="text-[9px] text-white/30 font-medium uppercase tracking-[0.4em] block">Link: Official Website</label>
+                            <input className="w-full bg-transparent border-b border-white/5 py-3 text-white text-xs outline-none focus:border-brand-gold font-mono" value={editingSettings.link_website || ''} onChange={e => updateField('link_website', e.target.value)} />
+                        </div>
+                        <div className="space-y-6 mt-8">
+                            <label className="text-[9px] text-white/30 font-medium uppercase tracking-[0.4em] block">Link: Spotify</label>
+                            <input className="w-full bg-transparent border-b border-white/5 py-3 text-white text-xs outline-none focus:border-brand-gold font-mono" value={editingSettings.link_spotify || ''} onChange={e => updateField('link_spotify', e.target.value)} />
+                        </div>
+                        <div className="space-y-6">
+                            <label className="text-[9px] text-white/30 font-medium uppercase tracking-[0.4em] block">Link: Apple Music</label>
+                            <input className="w-full bg-transparent border-b border-white/5 py-3 text-white text-xs outline-none focus:border-brand-gold font-mono" value={editingSettings.link_apple || ''} onChange={e => updateField('link_apple', e.target.value)} />
+                        </div>
+                        <div className="space-y-6">
+                            <label className="text-[9px] text-white/30 font-medium uppercase tracking-[0.4em] block">Link: YouTube Channel</label>
+                            <input className="w-full bg-transparent border-b border-white/5 py-3 text-white text-xs outline-none focus:border-brand-gold font-mono" value={editingSettings.link_youtube || ''} onChange={e => updateField('link_youtube', e.target.value)} />
+                        </div>
+                        <div className="space-y-6">
+                            <label className="text-[9px] text-white/30 font-medium uppercase tracking-[0.4em] block">Link: Tidal</label>
+                            <input className="w-full bg-transparent border-b border-white/5 py-3 text-white text-xs outline-none focus:border-brand-gold font-mono" value={editingSettings.link_tidal || ''} onChange={e => updateField('link_tidal', e.target.value)} />
+                        </div>
                     </div>
-                    <div className="space-y-6">
-                        <label className="text-[9px] text-white/30 font-medium uppercase tracking-[0.4em] block">Link: Spotify</label>
-                        <input className="w-full bg-transparent border-b border-white/5 py-3 text-white text-xs outline-none focus:border-brand-gold font-mono" value={editingSettings.link_spotify || ''} onChange={e => updateField('link_spotify', e.target.value)} />
-                    </div>
-                    <div className="space-y-6">
-                        <label className="text-[9px] text-white/30 font-medium uppercase tracking-[0.4em] block">Link: Apple Music</label>
-                        <input className="w-full bg-transparent border-b border-white/5 py-3 text-white text-xs outline-none focus:border-brand-gold font-mono" value={editingSettings.link_apple || ''} onChange={e => updateField('link_apple', e.target.value)} />
-                    </div>
-                    <div className="space-y-6">
-                        <label className="text-[9px] text-white/30 font-medium uppercase tracking-[0.4em] block">Link: YouTube Channel</label>
-                        <input className="w-full bg-transparent border-b border-white/5 py-3 text-white text-xs outline-none focus:border-brand-gold font-mono" value={editingSettings.link_youtube || ''} onChange={e => updateField('link_youtube', e.target.value)} />
-                    </div>
-                    <div className="space-y-6">
-                        <label className="text-[9px] text-white/30 font-medium uppercase tracking-[0.4em] block">Link: Tidal</label>
-                        <input className="w-full bg-transparent border-b border-white/5 py-3 text-white text-xs outline-none focus:border-brand-gold font-mono" value={editingSettings.link_tidal || ''} onChange={e => updateField('link_tidal', e.target.value)} />
-                    </div>
-                </div>
+                )}
             </div>
 
             {/* Countdown & Video Section */}
-            <div className="bg-white/[0.02] border border-white/5 p-8 rounded-2xl">
-                <div className="flex items-center gap-3 mb-8">
-                    <div className="w-1 h-4 bg-brand-gold"></div>
-                    <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-white/80">Countdown & Video (About Page)</h3>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                    <div className="space-y-6">
-                        <label className="text-[9px] text-white/30 font-medium uppercase tracking-[0.4em] block">Countdown Target Date (e.g., 2026-12-31T23:59:59)</label>
-                        <input type="datetime-local" className="w-full bg-transparent border-b border-white/5 py-3 text-white text-xs outline-none focus:border-brand-gold font-mono" value={editingSettings.countdownTargetDate || ''} onChange={e => updateField('countdownTargetDate', e.target.value)} />
+            <div className="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden transition-all duration-300">
+                <div 
+                    className="p-8 cursor-pointer flex justify-between items-center hover:bg-white/[0.04] transition-colors"
+                    onClick={() => toggleSection('countdown')}
+                >
+                    <div className="flex items-center gap-3">
+                        <div className="w-1 h-4 bg-brand-gold"></div>
+                        <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-white/80">Countdown & Video (About Page)</h3>
                     </div>
-                    <div className="space-y-6">
-                        <label className="text-[9px] text-white/30 font-medium uppercase tracking-[0.4em] block">YouTube Video URL (New Release)</label>
-                        <input className="w-full bg-transparent border-b border-white/5 py-3 text-white text-xs outline-none focus:border-brand-gold font-mono" placeholder="https://www.youtube.com/watch?v=..." value={editingSettings.youtubeVideoUrl || ''} onChange={e => updateField('youtubeVideoUrl', e.target.value)} />
-                    </div>
+                    <span className="text-brand-gold text-xs">{expandedSections.countdown ? '−' : '+'}</span>
                 </div>
+                {expandedSections.countdown && (
+                    <div className="p-8 pt-0 grid grid-cols-1 md:grid-cols-2 gap-12 border-t border-white/5 mt-4">
+                        <div className="space-y-6 mt-8">
+                            <label className="text-[9px] text-white/30 font-medium uppercase tracking-[0.4em] block">Countdown Target Date (e.g., 2026-12-31T23:59:59)</label>
+                            <input type="datetime-local" className="w-full bg-transparent border-b border-white/5 py-3 text-white text-xs outline-none focus:border-brand-gold font-mono" value={editingSettings.countdownTargetDate || ''} onChange={e => updateField('countdownTargetDate', e.target.value)} />
+                        </div>
+                        <div className="space-y-6 mt-8">
+                            <label className="text-[9px] text-white/30 font-medium uppercase tracking-[0.4em] block">YouTube Video URL (New Release)</label>
+                            <input className="w-full bg-transparent border-b border-white/5 py-3 text-white text-xs outline-none focus:border-brand-gold font-mono" placeholder="https://www.youtube.com/watch?v=..." value={editingSettings.youtubeVideoUrl || ''} onChange={e => updateField('youtubeVideoUrl', e.target.value)} />
+                        </div>
+                    </div>
+                )}
             </div>
 
             <button onClick={handleSaveSettings} className="w-full py-10 bg-brand-gold text-black text-[11px] font-black uppercase tracking-[1em] hover:bg-white transition-all shadow-[0_30px_100px_rgba(0,0,0,0.2)] pl-[1em]">Update All Global Parameters</button>
