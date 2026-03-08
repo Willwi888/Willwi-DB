@@ -119,7 +119,6 @@ const GlobalPlayer: React.FC = () => {
         <audio 
             ref={audioRef} 
             src={currentAudioSrc || undefined} 
-            crossOrigin="anonymous"
             onTimeUpdate={() => { if (audioRef.current) setProgress(audioRef.current.currentTime); }}
             onEnded={() => setIsPlaying(false)}
             onLoadedMetadata={() => setDuration(audioRef.current?.duration || 0)}

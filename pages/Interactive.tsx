@@ -189,6 +189,18 @@ const Interactive: React.FC = () => {
     }
   }, [isPaused, currentLineIndex, lyricsLines]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.repeat) return;
+        if (mode === 'playing' && !isPaused && (e.code === 'Space' || e.code === 'ArrowDown')) {
+            e.preventDefault();
+            handleCapture();
+        }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [mode, isPaused, handleCapture]);
+
   const handleTogglePlay = async (e?: any) => {
       if (e) e.stopPropagation();
       if (!audioRef.current) return;
@@ -200,7 +212,7 @@ const Interactive: React.FC = () => {
           } catch (e) { showToast("Audio Playback Error", "error"); }
       } else {
           audioRef.current.pause();
-          setIsPaused(false); // 在一擊必中邏輯下，Pause 其實是 Stop
+          setIsPaused(true); // 在一擊必中邏輯下，Pause 其實是 Stop
       }
   };
 
@@ -461,7 +473,7 @@ const Interactive: React.FC = () => {
                </div>
            )}
       </div>
-      <audio ref={audioRef} src={resolveDirectLink(selectedSong?.audioUrl || '') || undefined} crossOrigin="anonymous" onTimeUpdate={() => { if (audioRef.current) setProgress(audioRef.current.currentTime); }} onLoadedMetadata={() => setDuration(audioRef.current?.duration || 0)} />
+      <audio ref={audioRef} src={resolveDirectLink(selectedSong?.audioUrl || '') || undefined} onTimeUpdate={() => { if (audioRef.current) setProgress(audioRef.current.currentTime); }} onLoadedMetadata={() => setDuration(audioRef.current?.duration || 0)} />
     </div>
   );
 }; export default Interactive;

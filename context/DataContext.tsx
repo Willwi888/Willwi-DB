@@ -74,6 +74,12 @@ export const resolveDirectLink = (url: string) => {
     if (cleanUrl.includes('dropbox.com')) {
         return cleanUrl.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace(/\?dl=[01]/, '?raw=1');
     }
+    if (cleanUrl.includes('drive.google.com')) {
+        const match = cleanUrl.match(/\/d\/([a-zA-Z0-9_-]+)/) || cleanUrl.match(/id=([a-zA-Z0-9_-]+)/);
+        if (match && match[1]) {
+            return `https://drive.google.com/uc?export=download&id=${match[1]}`;
+        }
+    }
     return cleanUrl;
 };
 
