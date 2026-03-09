@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
+import { io } from 'socket.io-client';
 import { Song, SongContextType, Language, ProjectType, ReleaseCategory } from '../types';
 import { dbService, GuestbookMessage } from '../services/db';
 import { OFFICIAL_CATALOG, ASSETS } from './InitialData';
@@ -221,9 +222,96 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (e) { return false; }
   };
 
+  const [socket, setSocket] = useState<any>(null);
+
+  useEffect(() => {
+    const newSocket = io();
+    setSocket(newSocket);
+
+    newSocket.on("init", (db) => {
+      if (db.settings && Object.keys(db.settings).length > 0) {
+        setGlobalSettings(db.settings);
+        localStorage.setItem(SETTINGS_LOCAL_KEY, JSON.stringify(db.settings));
+      }
+      if (db.songs && db.songs.length > 0) {
+        setSongs(db.songs);
+        dbService.clearAllSongs().then(() => dbService.bulkAdd(db.songs));
+      }
+      if (db.messages && db.messages.length > 0) {
+        setMessages(db.messages);
+        db.messages.forEach((m: any) => dbService.updateMessage(m));
+      }
+    });
+
+    newSocket.on("settings_updated", (settings) => {
+      setGlobalSettings(settings);
+      localStorage.setItem(SETTINGS_LOCAL_KEY, JSON.stringify(settings));
+    });
+
+    newSocket.on("songs_updated", (newSongs) => {
+      setSongs(newSongs);
+      dbService.clearAllSongs().then(() => dbService.bulkAdd(newSongs));
+    });
+
+    newSocket.on("song_added", (song) => {
+      setSongs(prev => {
+        if (!prev.find(s => s.id === song.id)) {
+          dbService.addSong(song);
+          return [song, ...prev];
+        }
+        return prev;
+      });
+    });
+
+    newSocket.on("song_updated", (song) => {
+      setSongs(prev => prev.map(s => {
+        if (s.id === song.id) {
+          dbService.updateSong(song);
+          return song;
+        }
+        return s;
+      }));
+    });
+
+    newSocket.on("song_deleted", (id) => {
+      setSongs(prev => prev.filter(s => s.id !== id));
+      dbService.deleteSong(id);
+    });
+
+    newSocket.on("message_added", (msg) => {
+      setMessages(prev => {
+        if (!prev.find(m => m.id === msg.id)) {
+          dbService.addMessage(msg);
+          return [msg, ...prev];
+        }
+        return prev;
+      });
+    });
+
+    newSocket.on("message_updated", (msg) => {
+      setMessages(prev => prev.map(m => {
+        if (m.id === msg.id) {
+          dbService.updateMessage(msg);
+          return msg;
+        }
+        return m;
+      }));
+    });
+
+    newSocket.on("message_deleted", (id) => {
+      setMessages(prev => prev.filter(m => m.id !== id));
+      dbService.deleteMessage(id);
+    });
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, []);
+
   const uploadSettingsToCloud = async (settings: GlobalSettings) => {
     setGlobalSettings(settings);
     localStorage.setItem(SETTINGS_LOCAL_KEY, JSON.stringify(settings));
+    if (socket) socket.emit("update_settings", settings);
     showToast("系統母帶設定已鎖定 (Locked)", "success");
   };
 
@@ -237,6 +325,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const song = { ...s, id: songId, origin: 'local' as const };
             await dbService.addSong(song);
             setSongs(prev => [song, ...prev]);
+            if (socket) socket.emit("add_song", song);
             return true;
         },
         updateSong: async (id, s) => {
@@ -245,6 +334,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 const u = { ...existing, ...s };
                 await dbService.updateSong(u);
                 setSongs(prev => prev.map(x => x.id === id ? u : x));
+                if (socket) socket.emit("update_song", u);
                 return true;
             }
             return false;
@@ -252,10 +342,14 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         deleteSong: async (id) => {
             await dbService.deleteSong(id);
             setSongs(prev => prev.filter(x => x.id !== id));
+            if (socket) socket.emit("delete_song", id);
         },
         bulkUpdateSongs: async (ids, updates) => {
             const list = songs.filter(s => ids.includes(s.id)).map(s => ({ ...s, ...updates }));
-            for (const item of list) await dbService.updateSong(item);
+            for (const item of list) {
+                await dbService.updateSong(item);
+                if (socket) socket.emit("update_song", item);
+            }
             setSongs(prev => prev.map(s => ids.includes(s.id) ? { ...s, ...updates } : s));
             return true;
         },
@@ -264,15 +358,22 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             await dbService.clearAllSongs();
             await dbService.bulkAdd(s);
             setSongs(s);
+            if (socket) socket.emit("sync_songs", s);
             return true;
         },
         bulkAppendSongs: async (items) => {
             await dbService.bulkAdd(items);
             setSongs(prev => [...prev, ...items]);
+            for (const item of items) {
+                if (socket) socket.emit("add_song", item);
+            }
             return true;
         },
         isSyncing, syncSuccess, lastError, refreshData: loadData, 
-        uploadSongsToCloud: async () => true,
+        uploadSongsToCloud: async (dataToSync) => {
+            if (socket) socket.emit("sync_songs", dataToSync);
+            return true;
+        },
         uploadSettingsToCloud, globalSettings, setGlobalSettings,
         currentSong, setCurrentSong, isPlaying, setIsPlaying, playSong: (s) => { setCurrentSong(s); setIsPlaying(true); },
         syncSongWithSpotify,
@@ -292,6 +393,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             
             await dbService.addMessage(newMsg);
             setMessages(prev => [newMsg, ...prev]);
+            if (socket) socket.emit("add_message", newMsg);
             
             // Send notification to admin (simulated)
             if (!isSpam) {
@@ -306,11 +408,13 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 const updated = { ...msg, isApproved: true };
                 await dbService.updateMessage(updated);
                 setMessages(prev => prev.map(m => m.id === id ? updated : m));
+                if (socket) socket.emit("update_message", updated);
             }
         },
         deleteMessage: async (id) => {
             await dbService.deleteMessage(id);
             setMessages(prev => prev.filter(m => m.id !== id));
+            if (socket) socket.emit("delete_message", id);
         }
     }}>
       {children}

@@ -11,7 +11,7 @@ export const GRANDMA_SYSTEM_INSTRUCTION = `
  * 透過 AI 搜尋發現藝術家的完整作品集
  */
 export const getArtistDiscographyViaAI = async (artistName: string): Promise<any[]> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3.1-pro-preview',
@@ -58,7 +58,7 @@ export const getArtistDiscographyViaAI = async (artistName: string): Promise<any
  * 生成作品推薦視覺圖
  */
 export const generateSongVisual = async (prompt: string): Promise<string | null> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
@@ -92,7 +92,7 @@ export const generateSongVisual = async (prompt: string): Promise<string | null>
  */
 export const generatePromoVideo = async (prompt: string): Promise<string | null> => {
   // 注意：呼叫此函數前需確保使用者已透過 window.aistudio.openSelectKey() 選擇金鑰
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     let operation = await ai.models.generateVideos({
       model: 'veo-3.1-fast-generate-preview',
@@ -112,7 +112,7 @@ export const generatePromoVideo = async (prompt: string): Promise<string | null>
     const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
     if (!downloadLink) return null;
 
-    const response = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
+    const response = await fetch(`${downloadLink}&key=${process.env.GEMINI_API_KEY}`);
     const blob = await response.blob();
     return URL.createObjectURL(blob);
   } catch (error: any) {
@@ -127,7 +127,7 @@ export const generatePromoVideo = async (prompt: string): Promise<string | null>
 };
 
 export const getLatestWillwiInfo = async (): Promise<{ text: string; sources?: { title: string; uri: string }[] }> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
@@ -157,7 +157,7 @@ export const getLatestWillwiInfo = async (): Promise<{ text: string; sources?: {
 };
 
 export const checkSpam = async (message: string): Promise<boolean> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
@@ -190,7 +190,7 @@ export const getChatResponse = async (
   message: string, 
   history: { role: 'user' | 'model'; parts: { text: string }[] }[] = []
 ): Promise<{ text: string; sources?: { title: string; uri: string }[] }> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   const chat = ai.chats.create({
     model: 'gemini-3.1-pro-preview',
     config: { systemInstruction: GRANDMA_SYSTEM_INSTRUCTION, tools: [{ googleSearch: {} }] },
