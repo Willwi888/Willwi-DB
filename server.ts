@@ -35,6 +35,51 @@ async function startServer() {
 
   app.use(express.json());
 
+  // Spotify Proxy
+  let spotifyToken = "";
+  let spotifyTokenExpiry = 0;
+
+  async function getSpotifyToken() {
+    if (spotifyToken && Date.now() < spotifyTokenExpiry) return spotifyToken;
+    
+    const clientId = process.env.SPOTIFY_CLIENT_ID || 'a64ec262abd745eeaf4db5faf597d19b';
+    const clientSecret = process.env.SPOTIFY_CLIENT_SECRET || '67657590909b48afbf1fd45e09400b6b';
+    
+    const response = await fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Basic ' + Buffer.from(clientId + ':' + clientSecret).toString('base64'),
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: 'grant_type=client_credentials'
+    });
+    
+    if (!response.ok) throw new Error("Failed to get Spotify token");
+    
+    const data: any = await response.json();
+    spotifyToken = data.access_token;
+    spotifyTokenExpiry = Date.now() + (data.expires_in - 60) * 1000;
+    return spotifyToken;
+  }
+
+  app.get("/api/spotify/proxy/*all", async (req, res) => {
+    try {
+      const token = await getSpotifyToken();
+      const path = req.params.all;
+      const query = new URLSearchParams(req.query as any).toString();
+      const url = `https://api.spotify.com/v1/${path}${query ? '?' + query : ''}`;
+      
+      const response = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      res.json(data);
+    } catch (error) {
+      console.error("Spotify proxy error:", error);
+      res.status(500).json({ error: "Spotify proxy failed" });
+    }
+  });
+
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok" });
   });
