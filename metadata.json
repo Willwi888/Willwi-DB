@@ -1,5 +1,5 @@
 {
-  "name": "Remix: Willwi Creative DB - Workspace V2",
+  "name": "Willwi Music Database & Creative Lab",
   "description": "Refreshed Official Music Database for Willwi. Optimized for sensory synchronization, cloud persistence, and official ISRC management. This instance is disconnected from legacy repositories.",
   "requestFramePermissions": [
     "microphone"

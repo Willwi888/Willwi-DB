@@ -1,9 +1,6 @@
 
 import { Song, ReleaseCategory } from "../types";
 
-const CLIENT_ID = 'a64ec262abd745eeaf4db5faf597d19b';
-const CLIENT_SECRET = '67657590909b48afbf1fd45e09400b6b';
-
 export interface SpotifyTrack {
   id: string;
   name: string;
@@ -52,19 +49,19 @@ export const inferReleaseCategory = (totalTracks: number): ReleaseCategory => {
 
 export const getArtistAlbums = async (artistId: string): Promise<SpotifyAlbum[]> => {
   let allAlbums: SpotifyAlbum[] = [];
-  let nextUrl: string | null = `artists/${artistId}/albums?limit=50&include_groups=album,single`;
+  let nextUrl: string | null = `/api/spotify/artists/${artistId}/albums?limit=50&include_groups=album,single`;
 
   try {
     while (nextUrl) {
-      const response = await fetch(`/api/spotify/proxy/${nextUrl}`);
+      const response = await fetch(nextUrl);
       if (!response.ok) break;
       const data = await response.json();
       allAlbums = [...allAlbums, ...(data.items || [])];
       
       if (data.next) {
-          // Extract the path and query from the full Spotify URL
+          // Convert Spotify URL to proxy URL
           const url = new URL(data.next);
-          nextUrl = url.pathname.replace('/v1/', '') + url.search;
+          nextUrl = `/api/spotify${url.pathname.replace('/v1', '')}${url.search}`;
       } else {
           nextUrl = null;
       }
@@ -72,7 +69,7 @@ export const getArtistAlbums = async (artistId: string): Promise<SpotifyAlbum[]>
     const uniqueAlbums = Array.from(new Map(allAlbums.map(a => [a.id, a])).values());
     return uniqueAlbums.sort((a,b) => b.release_date.localeCompare(a.release_date));
   } catch (error) {
-    console.error("Spotify API error during getArtistAlbums:", error);
+    console.error("Spotify Proxy API error during getArtistAlbums:", error);
     return [];
   }
 };
@@ -81,7 +78,7 @@ export const getArtistAlbums = async (artistId: string): Promise<SpotifyAlbum[]>
 export const getSpotifyAlbumsBatch = async (albumIds: string[]): Promise<SpotifyAlbum[]> => {
     if (albumIds.length === 0) return [];
     try {
-        const response = await fetch(`/api/spotify/proxy/albums?ids=${albumIds.join(',')}`);
+        const response = await fetch(`/api/spotify/albums?ids=${albumIds.join(',')}`);
         if (!response.ok) return [];
         const data = await response.json();
         return data.albums || [];
@@ -94,7 +91,7 @@ export const getSpotifyAlbumsBatch = async (albumIds: string[]): Promise<Spotify
 export const getSpotifyTracksBatch = async (trackIds: string[]): Promise<SpotifyTrack[]> => {
     if (trackIds.length === 0) return [];
     try {
-        const response = await fetch(`/api/spotify/proxy/tracks?ids=${trackIds.join(',')}`);
+        const response = await fetch(`/api/spotify/tracks?ids=${trackIds.join(',')}`);
         if (!response.ok) return [];
         const data = await response.json();
         return data.tracks || [];
@@ -105,7 +102,7 @@ export const getSpotifyTracksBatch = async (trackIds: string[]): Promise<Spotify
 
 export const getSpotifyAlbumTracks = async (albumId: string): Promise<SpotifyTrack[]> => {
     try {
-        const response = await fetch(`/api/spotify/proxy/albums/${albumId}/tracks?limit=50`);
+        const response = await fetch(`/api/spotify/albums/${albumId}/tracks?limit=50`);
         if (!response.ok) return [];
         const data = await response.json();
         return data.items || [];
@@ -116,7 +113,7 @@ export const getSpotifyAlbumTracks = async (albumId: string): Promise<SpotifyTra
 
 export const getSpotifyAlbum = async (albumId: string): Promise<SpotifyAlbum | null> => {
     try {
-        const response = await fetch(`/api/spotify/proxy/albums/${albumId}`);
+        const response = await fetch(`/api/spotify/albums/${albumId}`);
         if (!response.ok) return null;
         return await response.json();
     } catch (error) {
@@ -127,7 +124,7 @@ export const getSpotifyAlbum = async (albumId: string): Promise<SpotifyAlbum | n
 export const getSpotifyFullTracks = async (trackIds: string[]): Promise<SpotifyTrack[]> => {
     if (trackIds.length === 0) return [];
     try {
-        const response = await fetch(`/api/spotify/proxy/tracks?ids=${trackIds.join(',')}`);
+        const response = await fetch(`/api/spotify/tracks?ids=${trackIds.join(',')}`);
         if (!response.ok) return [];
         const data = await response.json();
         return data.tracks || [];
@@ -138,7 +135,7 @@ export const getSpotifyFullTracks = async (trackIds: string[]): Promise<SpotifyT
 
 export const searchSpotifyTracks = async (query: string) => {
     try {
-        const response = await fetch(`/api/spotify/proxy/search?q=${encodeURIComponent(query)}&type=track&limit=50`);
+        const response = await fetch(`/api/spotify/search?q=${encodeURIComponent(query)}&type=track&limit=50`);
         const data = await response.json();
         return data.tracks?.items || [];
     } catch (e) { return []; }
@@ -146,7 +143,7 @@ export const searchSpotifyTracks = async (query: string) => {
 
 export const searchSpotifyAlbums = async (query: string) => {
     try {
-        const response = await fetch(`/api/spotify/proxy/search?q=${encodeURIComponent(query)}&type=album&limit=20`);
+        const response = await fetch(`/api/spotify/search?q=${encodeURIComponent(query)}&type=album&limit=20`);
         const data = await response.json();
         return data.albums?.items || [];
     } catch (e) { return []; }

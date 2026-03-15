@@ -7,6 +7,45 @@ import path from "path";
 
 const DATA_FILE = path.join(process.cwd(), "data.json");
 
+// Spotify Credentials
+const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID || 'a64ec262abd745eeaf4db5faf597d19b';
+const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET || '67657590909b48afbf1fd45e09400b6b';
+
+let spotifyAccessToken = '';
+let spotifyTokenExpiration = 0;
+
+async function getSpotifyToken() {
+  if (spotifyAccessToken && Date.now() < spotifyTokenExpiration) {
+    return spotifyAccessToken;
+  }
+
+  try {
+    const auth = Buffer.from(`${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`).toString('base64');
+    const response = await fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${auth}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: 'grant_type=client_credentials'
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Spotify Token Error:", errorText);
+      return null;
+    }
+
+    const data: any = await response.json();
+    spotifyAccessToken = data.access_token;
+    spotifyTokenExpiration = Date.now() + ((data.expires_in - 60) * 1000);
+    return spotifyAccessToken;
+  } catch (error) {
+    console.error("Failed to fetch Spotify token:", error);
+    return null;
+  }
+}
+
 let db = {
   songs: [],
   settings: {},
@@ -35,53 +74,34 @@ async function startServer() {
 
   app.use(express.json());
 
-  // Spotify Proxy
-  let spotifyToken = "";
-  let spotifyTokenExpiry = 0;
-
-  async function getSpotifyToken() {
-    if (spotifyToken && Date.now() < spotifyTokenExpiry) return spotifyToken;
-    
-    const clientId = process.env.SPOTIFY_CLIENT_ID || 'a64ec262abd745eeaf4db5faf597d19b';
-    const clientSecret = process.env.SPOTIFY_CLIENT_SECRET || '67657590909b48afbf1fd45e09400b6b';
-    
-    const response = await fetch('https://accounts.spotify.com/api/token', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Basic ' + Buffer.from(clientId + ':' + clientSecret).toString('base64'),
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: 'grant_type=client_credentials'
-    });
-    
-    if (!response.ok) throw new Error("Failed to get Spotify token");
-    
-    const data: any = await response.json();
-    spotifyToken = data.access_token;
-    spotifyTokenExpiry = Date.now() + (data.expires_in - 60) * 1000;
-    return spotifyToken;
-  }
-
-  app.get("/api/spotify/proxy/*all", async (req, res) => {
-    try {
-      const token = await getSpotifyToken();
-      const path = req.params.all;
-      const query = new URLSearchParams(req.query as any).toString();
-      const url = `https://api.spotify.com/v1/${path}${query ? '?' + query : ''}`;
-      
-      const response = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await response.json();
-      res.json(data);
-    } catch (error) {
-      console.error("Spotify proxy error:", error);
-      res.status(500).json({ error: "Spotify proxy failed" });
-    }
-  });
-
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok" });
+  });
+
+  // Spotify Proxy Routes
+  app.get("/api/spotify/*", async (req, res) => {
+    const token = await getSpotifyToken();
+    if (!token) {
+      return res.status(500).json({ error: "Failed to get Spotify token" });
+    }
+
+    const spotifyPath = req.params[0];
+    const query = new URLSearchParams(req.query as any).toString();
+    const url = `https://api.spotify.com/v1/${spotifyPath}${query ? `?${query}` : ""}`;
+
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+      res.status(response.status).json(data);
+    } catch (error) {
+      console.error("Spotify Proxy Error:", error);
+      res.status(500).json({ error: "Failed to fetch from Spotify" });
+    }
   });
 
   io.on("connection", (socket) => {
