@@ -36,7 +36,10 @@ const AdminDashboard: React.FC = () => {
   };
 
   const handleSyncAllSpotifyData = async () => {
-    if (songs.length === 0) return;
+    if (songs.length === 0) {
+      showToast("目前沒有母帶資料可同步", "info");
+      return;
+    }
     setIsBulkSyncing(true);
     showToast("啟動全域 Spotify 中繼資料同步協議...", "info");
     
@@ -176,14 +179,25 @@ const AdminDashboard: React.FC = () => {
                     <div className="bg-white/[0.02] border border-white/5 p-10 flex flex-col justify-center items-center gap-4">
                          <button 
                             disabled={isBulkSyncing}
-                            onClick={handleSyncAllSpotifyData} 
-                            className={`w-full py-5 border border-emerald-500/20 text-emerald-500 text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 hover:text-black transition-all ${isBulkSyncing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            onClick={() => {
+                                console.log("Global Spotify Sync clicked");
+                                handleSyncAllSpotifyData();
+                            }} 
+                            className={`w-full py-5 border border-emerald-500/20 text-emerald-500 text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 hover:text-black active:scale-95 transition-all ${isBulkSyncing ? 'opacity-50 cursor-not-allowed' : ''}`}
                          >
                             {isBulkSyncing ? 'Syncing System...' : 'Global Spotify Sync'}
                          </button>
                     </div>
                     <div className="bg-white/[0.02] border border-white/5 p-10 flex flex-col justify-center items-center">
-                         <button onClick={() => navigate('/add')} className="w-full py-5 bg-brand-gold/80 text-black text-[10px] font-black uppercase tracking-widest hover:bg-white transition-all">Create New Master Entry</button>
+                         <button 
+                            onClick={() => {
+                                console.log("Create New Master Entry clicked");
+                                navigate('/add');
+                            }} 
+                            className="w-full py-5 bg-brand-gold/80 text-black text-[10px] font-black uppercase tracking-widest hover:bg-white active:scale-95 transition-all"
+                         >
+                            Create New Master Entry
+                         </button>
                     </div>
                </div>
                

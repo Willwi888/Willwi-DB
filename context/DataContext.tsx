@@ -132,18 +132,22 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   });
 
   const loadData = useCallback(async () => {
+      console.log("DataContext: Starting loadData...");
       setIsSyncing(true);
       setLastError(null);
       
       try {
           let localSongs = await dbService.getAllSongs();
+          console.log(`DataContext: Loaded ${localSongs.length} songs from IndexedDB`);
           const combinedMap = new Map<string, Song>();
           
           if (globalSettings.masterDataUrl) {
+              console.log(`DataContext: Fetching master data from ${globalSettings.masterDataUrl}`);
               try {
                   const res = await fetchWithRetry(resolveDirectLink(globalSettings.masterDataUrl));
                   const masterSongs = await res.json();
                   if (Array.isArray(masterSongs)) {
+                      console.log(`DataContext: Fetched ${masterSongs.length} songs from master URL`);
                       masterSongs.forEach(s => combinedMap.set(s.id, { ...s, origin: 'cloud' }));
                       await dbService.bulkAdd(masterSongs);
                       setSyncSuccess(true);
@@ -165,10 +169,12 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               return new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime();
           });
           
+          console.log(`DataContext: Final combined songs count: ${combined.length}`);
           setSongs(combined);
           
           // Load messages
           const msgs = await dbService.getAllMessages();
+          console.log(`DataContext: Loaded ${msgs.length} messages`);
           setMessages(msgs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
           
       } catch (error) {
@@ -177,6 +183,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setLastError("資料載入發生錯誤");
       } finally {
           setIsSyncing(false);
+          console.log("DataContext: loadData completed");
       }
   }, [globalSettings.masterDataUrl]);
 

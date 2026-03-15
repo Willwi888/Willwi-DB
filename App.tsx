@@ -35,7 +35,6 @@ const App: React.FC = () => {
                       <Route path="/admin" element={<AdminDashboard />} />
                       <Route path="/guestbook" element={<Guestbook />} />
                     </Routes>
-                    <ChatWidget />
                 </Layout>
                 </HashRouter>
             </DataProvider>
